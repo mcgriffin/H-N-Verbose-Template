@@ -1,0 +1,294 @@
+#macro( nnl )#end
+Clinical note for $cip.getNoteAuthorClinicianName()
+Date of Visit: $cip.getVisitDate()
+Visit number: $cip.getVisitId()
+Attending Physician: $cip.getNoteAttendingName()
+##demographics
+
+We had the pleasure of seeing $cip.demographics("firstName") $cip.demographics("lastName"), $cip.period($cip.demographics("birthDate")) old, on $cip.getVisitDate() in the Head and Neck Clinic for a follow-up appointment.
+
+##diagnosis
+#if($cip.getPiSubGroup("diagnosis"))
+DIAGNOSIS
+#end
+##Want dx to show together at the top of the paragraph
+#foreach($diagnosis in $noteData.patientInformation.diagnosis)
+    #if ($diagnosis.pathStageDate)The patient was diagnosed pathologically with a $diagnosis.pathTStage $diagnosis.pathNStage $diagnosis.pathMStage,#nnl()
+        #if($diagnosis.tumorGrade=='Unknown') $diagnosis.tumorGrade grade #nnl()
+        #elseif($diagnosis.tumorGrade) $diagnosis.tumorGrade #nnl()
+        #end
+        #if($diagnosis.histology)$diagnosis.histology of the #end
+        #if($diagnosis.dxLaterality)$cip.expandLeftAndRight($diagnosis.dxLaterality)#end
+        #if($diagnosis.diseaseSite) $diagnosis.diseaseSite,#end
+        #if($diagnosis.diseaseSubsite)$diagnosis.diseaseSubsite,#end on $cip.formatDate($diagnosis.pathStageDate).
+        #if($diagnosis.geneMutation)Gene Mutation: $diagnosis.geneMutation
+        #end
+        #if($diagnosis.geneExpression)Gene Expression: $diagnosis.geneExpression
+        #end
+
+    #elseif($diagnosis.clinicalStageDate)The patient was diagnosed clinically with a $diagnosis.clinicalTStage $diagnosis.clinicalNStage $diagnosis.clinicalMStage,
+        #if($diagnosis.tumorGrade=='Unknown') $diagnosis.tumorGrade grade
+        #elseif($diagnosis.tumorGrade) $diagnosis.tumorGrade
+        #end
+        #if($diagnosis.histology)$diagnosis.histology of the #end
+        #if($diagnosis.dxLaterality)$cip.expandLeftAndRight($diagnosis.dxLaterality) #end
+        #if($diagnosis.diseaseSite) $diagnosis.diseaseSite,#end
+        #if($diagnosis.diseaseSubsite)$diagnosis.diseaseSubsite,#end on $cip.formatDate($diagnosis.pathStageDate).
+        #if($diagnosis.geneMutation) Gene Mutation: $diagnosis.geneMutation
+        #end
+        #if($diagnosis.geneExpression) Gene Expression: $diagnosis.geneExpression
+        #end
+    #end
+#end
+##Treatment
+##Only showing treatments when there is pathological staging
+#foreach($diagnosis in $noteData.patientInformation.diagnosis)
+#if ($cip.subGroup($diagnosis, "treatment"))
+TREATMENT(S)
+#end
+#foreach($tx in $diagnosis.treatment)
+#set($radTx = $cip.subGroup($tx, "radiationTherapyTreatment"))
+#set($chemoTx = $cip.subGroup($tx, "chemotherapyTreatment"))
+#set($surgTx = $cip.subGroup($tx, "surgery"))
+#set($targetedTx = $cip.subGroup($tx, "targetedTherapy"))
+#set($immunoTx = $cip.subGroup($tx, "immunotherapy"))
+#set($hormonalTx = $cip.subGroup($tx, "hormonalTherapy"))
+#set($jTubeTx = $cip.subGroup($tx, "jTube"))
+##
+#if($radTx)
+Radiation: #nnl()
+            #if($radTx.radiationTreatmentSubModality)$radTx.radiationTreatmentSubModality #nnl()
+            #else Radiation #end
+            #if($tx.treatmentIntent)with $tx.treatmentIntent intent#end was given #nnl()
+            #if($tradTx.rtSite)to the $radTx.rtSite#end
+            #if($radTx.finishDate)from $cip.formatDate($radTx.startDate) to $cip.formatDate($radTx.finishDate). #nnl()
+            #else starting on $cip.formatDate($radTx.startDate) #nnl()
+            #end
+##
+#elseif($chemoTx)
+Chemotherapy: #nnl()
+            #if($chemoTx.courseNumber) $chemoTx.courseNumber cycles of#end
+            #if($chemoTx.regimen) $chemoTx.regimen #nnl()
+            #else Chemotherapy#end
+            #if($tx.treatmentIntent)with $tx.treatmentIntent intent#end was given to the patient #nnl()
+            #if($chemoTx.finishDate) from $cip.formatDate($chemoTx.startDate) to $cip.formatDate($chemoTx.finishDate) #nnl()
+            #else starting on $cip.formatDate($chemoTx.startDate) #nnl()
+            #end
+##
+#elseif($surgTx)
+Surgery: A(n) $surgTx.type, #nnl()
+            #if($tx.treatmentIntent) with $tx.treatmentIntent intent,#end was performed on $cip.formatDate($surgTx.surgeryDate) #nnl()
+##
+#elseif($jTubeTx)
+J-tube: A J-tube was inserted on $cip.formatDate($jTubeTx.jTubeInsertion) #nnl()
+            #if($jTubeTx.jTubeRemoval)and removed on $cip.formatDate($jTubeTx.jTubeRemoval) #nnl()
+            #end
+##
+#elseif($targetedTx)
+Targeted Therapy Treatment: #nnl()
+            #if($targetedTx.targetedTherapyType)$targetedTx.targetedTherapyType was given #nnl()
+            #else Targeted therapy was given#end
+            #if($targetedTx.targetedTherapyFinishDate) from $cip.formatDate($targetedTx.targetedTherapyStartDate) #nnl()
+            to $cip.formatDate($targetedTx.targetedTherapyFinishDate) #nnl()
+            #else starting on $cip.formatDate($targetedTx.targetedTherapyStartDate)#end
+##
+#elseif($immunoTx)
+Immunotherapy: #nnl()
+            #if($immunoTx.immunotherapyType)$immunoTx.immunotherapyType was given#nnl()
+            #else Immunotherapy was given#end
+            #if($immunoTx.immunotherapyFinishDate) from $cip.formatDate($immunoTx.immunotherapyStartDate) to $cip.formatDate($immunoTx.immunotherapyFinishDate) #nnl()
+            #else starting on $cip.formatDate($immunoTx.immunotherapyStartDate) #nnl()
+            #end
+##
+#elseif($hormonalTx)
+Hormonal Therapy: #nnl()
+            #if($hormonalTx.hormonalTherapyType)$hormonalTx.hormonalTherapyType was given #nnl()
+            #else Hormonal therapy was given#end
+            #if($hormonalTx.hormonalTherapyFinishDate) from $cip.formatDate($hormonalTx.hormonalTherapyStartDate) to $cip.formatDate($hormonalTx.hormonalTherapyFinishDate) #nnl()
+            #else starting on $cip.formatDate($hormonalTx.hormonalTherapyStartDate) #nnl()
+            #end
+
+        #end  ## end of the treatment loop
+    #end  ## end of the foreach loop TX
+#end  ## end of foreach loop DX
+##
+##
+#if($noteData.patientInformation.patientComplaints)$noteData.patientInformation.patientComplaints#end
+##
+#set($examProcedure = $cip.getPiSubGroup("examinationsAndProcedures"))
+##
+#if ($examProcedure && $cip.subGroup($examProcedure, "headAndNeckBodyRegion"))
+
+PHYSICAL EXAM
+A physical exam was performed on the patient.
+
+    #foreach ($exam in $examProcedure.headAndNeckBodyRegion)
+            #if ($exam.neck && $exam.neck == "Grossly Normal")Exam of the neck was grossly normal.
+            #elseif ($exam.neck == "Abnormal Result")Exam of the neck was abnormal.
+                #if($exam.neckAbnormalResult)Details of abnormal result: $exam.neckAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.oralCavity && $exam.oralCavity == "Grossly Normal")
+Exam of the oral cavity was grossly normal.
+            #elseif ($exam.oralCavity && $exam.oralCavity == "Abnormal Result")Exam of the oral cavity was abnormal.
+                #if($exam.oralCavityAbnormalResult)Details of abnormal result: $exam.oralCavityAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.oropharynx && $exam.oropharynx == "Grossly Normal")Exam of the oropharynx was grossly normal.
+            #elseif ($exam.oropharynx && $exam.oropharynx == "Abnormal Result")Exam of the oropharynx was abnormal.
+                #if($exam.oropharynxAbnormalResult)Details of abnormal result: $exam.oropharynxAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.skinScarLesions && $exam.skinScarLesions == "Grossly Normal")Exam of the skin/scar/lesions was grossly normal.
+            #elseif ($exam.skinScarLesions && $exam.skinScarLesions == "Abnormal Result")Exam of the skin/scar/lesions was abnormal.
+                #if($exam.skinScarLesionsAbnormalResult)Details of abnormal result: $exam.skinScarLesionsAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.cranialNerves && $exam.cranialNerves == "Grossly Normal")Exam of the cranial nerves was grossly normal.
+            #elseif ($exam.cranialNerves && $exam.cranialNerves == "Abnormal Result")Exam of the cranial nerves was abnormal.
+                #if($exam.cranialNervesAbnormalResult)Details of abnormal result: $exam.cranialNervesAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.nasalCavity && $exam.nasalCavity == "Grossly Normal")Exam of the nasal cavity was grossly normal.
+            #elseif ($exam.nasalCavity && $exam.nasalCavity == "Abnormal Result")Exam of the nasal cavity was abnormal.
+                #if($exam.nasalCavityAbnormalResult)Details of abnormal result: $exam.nasalCavityAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.eyes && $exam.eyes == "Grossly Normal")Exam of the eyes was grossly normal.
+            #elseif ($exam.eyes && $exam.eyes == "Abnormal Result")Exam of the eyes was abnormal.
+                #if($exam.eyesAbnormalResult)Details of abnormal result: $exam.eyesAbnormalResult
+                #end
+            #end
+##
+            #if ($exam.ears && $exam.ears == "Grossly Normal")Exam of the ears was grossly normal.
+            #elseif ($exam.ears && $exam.ears == "Abnormal Result")Exam of the ears was abnormal.
+                #if($exam.earsAbnormalResult)Details of abnormal result: $exam.earsAbnormalResult
+                #end
+            #end
+        #end  ##end of foreach
+    #end
+##
+    #if($examProcedure)
+        #if($examProcedure.biopsy == "Yes" || $examProcedure.scope == "Yes" || $examProcedure.ultrasound =="Yes")
+PROCEDURES:
+        #end
+        #if($examProcedure.biopsy && $examProcedure.biopsy == "Yes")A#nnl()
+            #if($examProcedure.biopsyType == "Other") biopsy#nnl()
+            #elseif($examProcedure.biopsyType == "FNA") $examProcedure.biopsyType#nnl()
+            #elseif($examProcedure.biopsyType) $examProcedure.biopsyType#nnl()
+            #else biopsy#end was performed on the patient.
+        #end
+##
+        #if($examProcedure.scope && $examProcedure.scope == "Yes")A scope was performed on the patient.
+            #if($examProcedure.larynx == "Grossly Normal")Findings from the scope of the larynx were grossly normal
+            #else Findings from the scope of the larynx were abnormal.#end
+            #if($examProcedure.larynxAbnormalResult) Details of abnormal result: $examProcedure.larynxAbnormalResult#end
+
+            #if($examProcedure.hypopharynx == "Grossly Normal")Findings from the scope of the hypopharynx were grossly normal
+            #else Findings from the scope of the hypopharynx were abnormal
+            #end
+            #if($examProcedure.hypopharynxAbnormalResult)Details of abnormal result: $examProcedure.hypopharynxAbnormalResult#end
+        #end
+##
+        #if($examProcedure.ultrasound && $examProcedure.ultrasound =="Yes")An ultrasound was performed on the patient.
+            #if($examProcedure.ultrasoundResult)Findings from the ultrasound are as follows: $examProcedure.ultrasoundResult#end
+        #end
+##
+    #end
+##
+## Test results
+    #set($testResults = $cip.getPiSubGroup("testResults"))
+    #if($testResults)
+
+TEST RESULTS:
+        #if($testResults.bloodworkReviewed == "Yes" && $testResults.imagingReviewed == "Yes")Both bloodwork and imaging were reviewed.
+            #if($testResults.bloodworkResults)Bloodwork Results: $testResults.bloodworkResults
+            #end
+            #if($testResults.imagingResult)Imaging Results: $testResults.imagingResult
+            #end
+        #else
+            #if($testResults.bloodworkReviewed == "Yes")Bloodwork was reviewed.
+                #if($testResults.bloodworkResults)Bloodwork Results: $testResults.bloodworkResults#end
+            #end
+            #if($testResults.imagingReviewed == "Yes")Imaging was reviewed.
+                #if($testResults.imagingResult)Imaging Results: $testResults.imagingResult#end
+            #end
+        #end
+    #end
+
+## Followup Plan
+#set($planFollowup = $cip.getPiSubGroup("planAndFollowUp"))
+#if ($planFollowup)
+IMPRESSION AND PLAN:
+
+##Outcomes
+#set($outcomes = $cip.getPiSubGroup("outcomes"))
+OUTCOMES
+
+        #if($outcomes.diseaseStatus)Disease status: $outcomes.diseaseStatus
+        #end
+        #if($outcomes.adverseEvents)Adverse events: $outcomes.adverseEvents
+        #end
+        #if ($planFollowup.plan)We will follow up with the patient in $math.round($planFollowup.followUpTime) $planFollowup.followUpTimeUnit #nnl()
+            #if ($planFollowup.plan == "Other"). #nnl()
+            #else for $planFollowup.plan.
+            #end
+##
+        #end
+        #if ($planFollowup.plan == "Treatment" && $planFollowup.reasonForTreatment)
+Reason for Treatment: $planFollowup.reasonForTreatment
+        #end
+        #if ($planFollowup.bloodworkRequired && $planFollowup.bloodworkRequired == "Yes")
+Bloodwork required: Yes
+        #end
+        #if ($planFollowup.typeOfBloodwork)Type of Bloodwork: $planFollowup.typeOfBloodwork
+        #end
+        #if ($planFollowup.biopsyRequired && $planFollowup.biopsyRequired == "Yes")
+Biopsy required: Yes
+        #end
+        #if ($planFollowup.swallowRequired && $planFollowup.swallowRequired == "Yes")
+Swallow Study required: Yes
+        #end
+##
+        #if ($cip.subGroup($planFollowup, "imaging"))
+The patient requires imaging
+            #if($cip.subGroup($planFollowup, "imagingRequiredInTime")) in $planFollowup.imagingRequiredInTime#end
+        #end
+##
+        #foreach($image in $planFollowup.imaging)
+            #if ($image.typeOfImaging == "Other")
+Type of imaging: $image.typeOfImaging
+            #if ($image.imagingRequiredInTime && $image.imagingRequiredInTimeUnits) $image.otherImaging is required in: $math.round($image.imagingRequiredInTime) $image.imagingRequiredInTimeUnits. #end
+            #elseif ($image.otherImaging)
+Type of imaging: $image.otherImaging
+                #if ($image.imagingRequiredInTime && $image.imagingRequiredInTimeUnits) Imaging is required in: $math.round($image.imagingRequiredInTime) $image.imagingRequiredInTimeUnits. #end
+            #end
+        #end  ##end of foreach
+##
+        #if($planFollowup.referralRequired == "Yes")
+##
+The patient will also be referred to $planFollowup.referralTo
+            #if($planFollowup.swallowStudyRequired == "Yes") for a swallow study.
+            #elseif($planFollowup.referralTo == "Palliative") care.
+            #end
+            #if($planFollowup.additionalInstructions)Additional Follow Up Instructions: $planFollowup.additionalInstructions#end
+        #end
+
+    ##We will see them back in clinic in $math.round($planFollowup.followUpTime) $planFollowup.followUpTimeUnit
+    #end ## end of followup plan
+##
+## additional instructions
+#set($noteCreatorEprId = $cip.noteInfo("noteCreatorEprId"))
+#set($lastAuthorEprId = $cip.noteInfo("lastAuthorEprId"))
+#set($submitterEprId = $cip.noteInfo("submitterEprId"))
+Note originally created by $cip.getClinicianName($lastAuthorEprId)
+    #if($lastAuthorEprId)Last authored by $cip.getClinicianName($lastAuthorEprId)
+    #end
+    #if($submitterEprId)Note submitted by $cip.getClinicianName($submitterEprId)
+    #end
